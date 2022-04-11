@@ -45,30 +45,32 @@ urls = {'PO': 'https://www.fips.ru/publication-web/publications/PO?pageNumber=<P
 # Сначала скачиваем все страницы
 page_number = 1
 while page_number <= pages_count:
-    print(page_number)
-    patents = []
-    page_url = urls[ois_type].replace("<PAGE_NUMBER>", str(page_number))
-    soup = BeautifulSoup(requests.get(page_url).text, 'html.parser')
-    for table in soup.select("td > table:has(tr.fline)"):
-        patent = {}
-        link = table.find('td', class_='nowrap').find("a")
-        # Patent URL
-        patent['url'] = "https://www.fips.ru" + link.get('href')
-        # Patent registration number
-        patent['reg_number'] = re.search(r"(\d+)", link.text).group(0)
-        # etc
-        spans = table.find_all('span', attrs={'class': 'mobileblock'})
-        for span in spans:
-            if "Регистрация" in span.text:
-                patent['reg_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
-            if "Публикация" in span.text:
-                patent['pub_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
-            if "Номер заявки" in span.text:
-                patent['app_number'] = re.search(r"(\d+)", span.text).group(0)
-            if "Дата подачи заявки" in span.text:
-                patent['app_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
-        patents.append(patent)
-    # сохранение JSON-файла
-    with open(os.path.join(project_dir, ois_type + '-page-' + str(page_number) + '.json'), 'w+') as fp:
-        json.dump(patents, fp)
+    json_filename = os.path.join(project_dir, ois_type + '-page-' + str(page_number) + '.json')
+    if os.path.exists(json_filename) is not True:
+        print(page_number)
+        patents = []
+        page_url = urls[ois_type].replace("<PAGE_NUMBER>", str(page_number))
+        soup = BeautifulSoup(requests.get(page_url).text, 'html.parser')
+        for table in soup.select("td > table:has(tr.fline)"):
+            patent = {}
+            link = table.find('td', class_='nowrap').find("a")
+            # Patent URL
+            patent['url'] = "https://www.fips.ru" + link.get('href')
+            # Patent registration number
+            patent['reg_number'] = re.search(r"(\d+)", link.text).group(0)
+            # etc
+            spans = table.find_all('span', attrs={'class': 'mobileblock'})
+            for span in spans:
+                if "Регистрация" in span.text:
+                    patent['reg_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
+                if "Публикация" in span.text:
+                    patent['pub_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
+                if "Номер заявки" in span.text:
+                    patent['app_number'] = re.search(r"(\d+)", span.text).group(0)
+                if "Дата подачи заявки" in span.text:
+                    patent['app_date'] = re.search(r"(\d{2}\.\d{2}\.\d{4})", span.text).group(0)
+            patents.append(patent)
+        # сохранение JSON-файла
+        with open(json_filename, 'w+') as fp:
+            json.dump(patents, fp)
     page_number = page_number + 1
